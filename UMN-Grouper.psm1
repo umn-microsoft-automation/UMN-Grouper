@@ -15,7 +15,7 @@
     # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
-#region New-Header
+#region New-GrouperHeader
     function New-GrouperHeader
     {
         <#
@@ -88,7 +88,7 @@
             [string]$uri,
 
             [Parameter(Mandatory)]
-            [string]$header,
+            [System.Collections.Hashtable]$header,
 
             [string]$contentType = 'text/x-json;charset=UTF-8',
 
@@ -172,7 +172,7 @@
             [string]$uri,
 
             [Parameter(Mandatory)]
-            [string]$header,
+            [System.Collections.Hashtable]$header,
 
             [string]$contentType = 'text/x-json;charset=UTF-8',
 
@@ -213,8 +213,141 @@
 #endregion
 
 #region New-GrouperGrouper
+    function New-GrouperGrouper
+    {
+        <#
+            .SYNOPSIS
+                Create new Group in Grouper
+
+            .DESCRIPTION
+                Create new Group in Grouper
+
+            .PARAMETER uri
+                Full path to Server plus path to API
+                Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+            .PARAMETER header
+                Use New-Header to get this
+
+            .PARAMETER contentType
+                Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+            .PARAMETER groupName
+                This represents the identifier for the group, it should look like 'stemname:group'
+                Example: stem1:substem:supergroup
+
+            .PARAMETER description
+                The description represents the the Name in the form users in the UI will see the group
+
+            .NOTES
+                Author: Travis Sobeck
+                LASTEDIT: 7/30/2018
+
+            .EXAMPLE
+        #>
+        [CmdletBinding()]
+        param
+        (
+            [Parameter(Mandatory)]
+            [string]$uri,
+
+            [Parameter(Mandatory)]
+            [System.Collections.Hashtable]$header,
+
+            [string]$contentType = 'text/x-json;charset=UTF-8',
+
+            [Parameter(Mandatory)]
+            [string]$groupName,
+
+            [Parameter(Mandatory)]
+            [string]$description
+        )
+
+        Begin{}
+
+        Process
+        {
+            $uri = "$uri/groups"
+            $body = @{
+                WsRestGroupSaveRequest = @{
+                    wsGroupToSaves = @(@{wsGroup = @{description = $description;displayExtension = $description;extension = $description;name = $groupName};wsGroupLookup = @{groupName = $groupName}})
+                }
+            } | ConvertTo-Json -Depth 5
+            ($response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType)
+            return ($response.Content | ConvertFrom-Json).WsGroupSaveResults.results.wsGroup
+        }
+
+        End{}
+    }
 #endregion
+
 #region New-GrouperStem
+    function New-GrouperStem
+    {
+        <#
+            .SYNOPSIS
+                Create new Stem in Grouper
+
+            .DESCRIPTION
+                Create new Stem in Grouper
+
+            .PARAMETER uri
+                Full path to Server plus path to API
+                Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+            .PARAMETER header
+                Use New-Header to get this
+
+            .PARAMETER contentType
+                Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+            .PARAMETER stemName
+                This represents the identifier for the stem, it should look like 'stemParentA:stemParentB:stemname'
+                Example: stem1:substem:newstem
+
+            .PARAMETER description
+                The description represents the the Name in the form users in the UI will see the group 
+
+            .NOTES
+                Author: Travis Sobeck
+                LASTEDIT: 7/30/2018
+
+            .EXAMPLE
+        #>
+        [CmdletBinding()]
+        param
+        (
+            [Parameter(Mandatory)]
+            [string]$uri,
+
+            [Parameter(Mandatory)]
+            [System.Collections.Hashtable]$header,
+
+            [string]$contentType = 'text/x-json;charset=UTF-8',
+
+            [Parameter(Mandatory)]
+            [string]$stemName,
+
+            [Parameter(Mandatory)]
+            [string]$description
+        )
+
+        Begin{}
+
+        Process
+        {
+            $uri = "$uri/stems"
+            $body = @{
+                WsRestStemSaveRequest = @{
+                    wsStemToSaves = @(@{wsStem = @{description = $desc;displayExtension = $desc;extension = $stemShortName;name = $stemName};wsStemLookup = @{stemName = $stemName}})
+                }
+            } | ConvertTo-Json -Depth 5
+            ($response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType)
+            return ($response.Content | ConvertFrom-Json).WsStemSaveResults.results.wsStem
+        }
+
+        End{}
+    }
 #endregion
 
 #region Remove-GrouperGrouper
@@ -253,7 +386,7 @@
             [string]$uri,
 
             [Parameter(Mandatory)]
-            [string]$header,
+            [System.Collections.Hashtable]$header,
 
             [string]$contentType = 'text/x-json;charset=UTF-8',
 
@@ -325,7 +458,7 @@
             [string]$uri,
 
             [Parameter(Mandatory)]
-            [string]$header,
+            [System.Collections.Hashtable]$header,
 
             [string]$contentType = 'text/x-json;charset=UTF-8',
 
@@ -342,9 +475,9 @@
             if ($removeGroups)
             {
                 # Get all the groups
-                #$groups = 
-
+                $groupNames = (Get-GrouperGrouper -uri $uri -header $header -stemName $stemName).name
                 # Remove the groups
+                $null = Remove-GrouperGrouper -uri $uri -header $header -groupName $groupNames[0]
             }
             $uri = "$uri/stems"
             $body = @{
@@ -361,55 +494,3 @@
         End{}
     }
 #endregion
-
-
-    function Remove-GrouperGrouper
-    {
-        <#
-            .SYNOPSIS
-                
-
-            .DESCRIPTION
-                
-
-            .PARAMETER uri
-                Full path to Server plus path to API
-                Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
-
-            .PARAMETER header
-                Use New-Header to get this
-
-            .PARAMETER contentType
-                Set Content Type, currently 'text/x-json;charset=UTF-8'
-
-            .PARAMETER 
-
-            .NOTES
-                Author: Travis Sobeck
-                LASTEDIT: 7/30/2018
-
-            .EXAMPLE
-        #>
-        [CmdletBinding()]
-        param
-        (
-            [Parameter(Mandatory)]
-            [string]$uri,
-
-            [Parameter(Mandatory)]
-            [string]$header,
-
-            [string]$contentType = 'text/x-json;charset=UTF-8',
-
-            [Parameter(Mandatory)]
-        )
-
-        Begin{}
-
-        Process
-        {
-            $uri = "$uri/"
-        }
-
-        End{}
-    }
