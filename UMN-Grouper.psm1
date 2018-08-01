@@ -339,7 +339,7 @@
             $uri = "$uri/stems"
             $body = @{
                 WsRestStemSaveRequest = @{
-                    wsStemToSaves = @(@{wsStem = @{description = $desc;displayExtension = $desc;extension = $stemShortName;name = $stemName};wsStemLookup = @{stemName = $stemName}})
+                    wsStemToSaves = @(@{wsStem = @{description = $description;displayExtension = $description;name = $stemName};wsStemLookup = @{stemName = $stemName}})
                 }
             } | ConvertTo-Json -Depth 5
             ($response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType)
@@ -399,19 +399,29 @@
         Process
         {
             $uri = "$uri/groups"
-            [array]$gnArray = @()
+            <# This didn't seem to work :()
+                foreach ($gn in $groupName)
+                {
+                    $gnArray = $gnArray + @{groupName = $gn}
+                }
+                $body = @{
+                    WsRestGroupDeleteRequest = @{
+                        wsGroupLookups = $gnArray
+                    }
+                } | ConvertTo-Json -Depth 5
+            #>
             foreach ($gn in $groupName)
             {
-                $gnArray = $gnArray + @{groupName = $gn}
+                $body = @{
+                    WsRestGroupDeleteRequest = @{
+                        wsGroupLookups = @(@{groupName = $gn})
+                    }
+                } | ConvertTo-Json -Depth 5
+                $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+                $deletedGroups = ($response.Content | ConvertFrom-Json).WsGroupDeleteResults.results.wsGroup
+                $deletedGroups
             }
-            $body = @{
-                WsRestGroupDeleteRequest = @{
-                    wsGroupLookups = $gnArray
-                }
-            } | ConvertTo-Json -Depth 5
-            $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
-            $deletedGroups = ($response.Content | ConvertFrom-Json).WsGroupDeleteResults.results.wsGroup
-            return $deletedGroups
+            
             #return ($response.Content | ConvertFrom-Json).WsGroupDeleteResults.results.resultMetadata.resultCode
         }
 
@@ -477,7 +487,11 @@
                 # Get all the groups
                 $groupNames = (Get-GrouperGrouper -uri $uri -header $header -stemName $stemName).name
                 # Remove the groups
-                $null = Remove-GrouperGrouper -uri $uri -header $header -groupName $groupNames[0]
+                if ($groupNames)
+                {
+                    $null = Remove-GrouperGrouper -uri $uri -header $header -groupName $groupNames
+                    Start-Sleep -Seconds 3
+                }                
             }
             $uri = "$uri/stems"
             $body = @{
