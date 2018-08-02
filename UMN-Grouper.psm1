@@ -133,6 +133,70 @@
     }
 #endregion
 
+#region Get-GrouperGrouperMembers
+    function Get-GrouperGrouperMembers
+    {
+        <#
+            .SYNOPSIS
+                Get List of Members in a Group
+
+            .DESCRIPTION
+                Get List of Members in a Group
+
+            .PARAMETER uri
+                Full path to Server plus path to API
+                Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+            .PARAMETER header
+                Use New-Header to get this
+
+            .PARAMETER contentType
+                Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+            .PARAMETER groupName
+                This represents the identifier for the group, it should look like 'stemname:group'
+                Example: stem1:substem:supergroup
+
+            .NOTES
+                Author: Travis Sobeck
+                LASTEDIT: 7/30/2018
+
+            .EXAMPLE
+        #>
+        [CmdletBinding()]
+        param
+        (
+            [Parameter(Mandatory)]
+            [string]$uri,
+
+            [Parameter(Mandatory)]
+            [System.Collections.Hashtable]$header,
+
+            [string]$contentType = 'text/x-json;charset=UTF-8',
+
+            [Parameter(Mandatory)]
+            [string]$groupName
+        )
+
+        Begin{}
+
+        Process
+        {
+            $uri = "$uri/groups"
+            $body = @{
+                WsRestGetMembersRequest = @{
+                    subjectAttributeNames = @("description","name")
+                    wsGroupLookups = @(@{groupName = $groupName})
+                }
+            } | ConvertTo-Json -Depth 5
+            $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+            return ($response.Content | ConvertFrom-Json).WsGetMembersResults.results.wsSubjects
+        }
+
+        End{}
+    }
+#endregion
+
 #region Get-GrouperStem
     function Get-GrouperStem
     {
@@ -275,6 +339,81 @@
             } | ConvertTo-Json -Depth 5
             ($response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType)
             return ($response.Content | ConvertFrom-Json).WsGroupSaveResults.results.wsGroup
+        }
+
+        End{}
+    }
+#endregion
+
+#region New-GrouperGroupMember
+    function New-GrouperGroupMember
+    {
+        <#
+            .SYNOPSIS
+                Add a user to a Group
+
+            .DESCRIPTION
+                Add a user to a Group
+
+            .PARAMETER uri
+                Full path to Server plus path to API
+                Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+            .PARAMETER header
+                Use New-Header to get this
+
+            .PARAMETER contentType
+                Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+            .PARAMETER groupName
+                This represents the identifier for the group, it should look like 'stemname:group'
+                Example: stem1:substem:supergroup
+
+            .PARAMETER subjectId
+
+            .PARAMETER subjectSourceId
+                Source location of subjectId, ie ldap
+            .NOTES
+                Author: Travis Sobeck
+                LASTEDIT: 7/30/2018
+
+            .EXAMPLE
+        #>
+        [CmdletBinding()]
+        param
+        (
+            [Parameter(Mandatory)]
+            [string]$uri,
+
+            [Parameter(Mandatory)]
+                [System.Collections.Hashtable]$header,
+
+            [string]$contentType = 'text/x-json;charset=UTF-8',
+
+            [Parameter(Mandatory)]
+            [string]$groupName,
+
+            [Parameter(Mandatory)]
+            [string]$subjectId,
+
+            [string]$subjectSourceId
+        )
+
+        Begin{}
+
+        Process
+        {
+            $uri = "$uri/groups"
+            $subjectLookups = @(@{subjectId = $subjectId})
+            if ($subjectSourceId){$subjectLookups[0]['subjectSourceId'] = $subjectSourceId}
+                $body = @{
+                    WsRestAddMemberRequest = @{
+                        subjectLookups = $subjectLookups
+                        wsGroupLookup = @{groupName = $groupName}
+                    }
+                } | ConvertTo-Json -Depth 5
+                $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+                return @(($response.Content | ConvertFrom-Json).WsAddMemberResults.results.wsSubject,($response.Content | ConvertFrom-Json).WsAddMemberResults.wsGroupAssigned)
         }
 
         End{}
