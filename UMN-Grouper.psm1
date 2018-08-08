@@ -46,8 +46,8 @@
     }
 #endregion
 
-#region Get-GrouperGrouper
-    function Get-GrouperGrouper
+#region Get-GrouperGroup
+    function Get-GrouperGroup
     {
         <#
             .SYNOPSIS
@@ -133,8 +133,8 @@
     }
 #endregion
 
-#region Get-GrouperGrouperMembers
-    function Get-GrouperGrouperMembers
+#region Get-GrouperGroupMembers
+    function Get-GrouperGroupMembers
     {
         <#
             .SYNOPSIS
@@ -195,6 +195,106 @@
 
         End{}
     }
+#endregion
+
+#region Get-GrouperPrivileges
+function Get-GrouperPrivileges
+{
+    <#
+        .SYNOPSIS
+            Get Grouper Privileges
+
+        .DESCRIPTION
+            Get Grouper Privileges
+
+        .PARAMETER uri
+            Full path to Server plus path to API
+            Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+        .PARAMETER header
+            Use New-Header to get this
+
+        .PARAMETER contentType
+            Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+        .PARAMETER stemName
+            stemName
+        
+        .PARAMETER subjectId
+            Filter result for a specific user
+
+        .PARAMETER actAsSubjectId
+            User security context to restrict search to.  ie search as this user
+
+        .NOTES
+            Author: Travis Sobeck
+            LASTEDIT: 7/30/2018
+
+        .EXAMPLE
+    #>
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory)]
+        [string]$uri,
+
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$header,
+
+        [string]$contentType = 'text/x-json;charset=UTF-8',
+
+        [Parameter(Mandatory,ParameterSetName='stem')]
+        [string]$stemName,
+
+        [Parameter(Mandatory,ParameterSetName='group')]
+        [string]$groupName,
+
+        [string]$actAsSubjectId,
+
+        [string]$subjectId
+    )
+
+    Begin{}
+    Process
+    {
+        $uri = "$uri/grouperPrivileges"
+        $body = @{
+            WsRestGetGrouperPrivilegesLiteRequest = @{}
+        } 
+        if ($subjectId)
+        {
+            
+            $body['WsRestGetGrouperPrivilegesLiteRequest']['actAsSubjectId'] = $subjectId
+        }
+        if ($actAsSubjectId)
+        {
+            
+            $body['WsRestGetGrouperPrivilegesLiteRequest']['actAsSubjectId'] = $actAsSubjectId
+        }
+        if ($groupName)
+        {
+            
+            $body['WsRestGetGrouperPrivilegesLiteRequest']['groupName'] = $groupName
+        }
+        if ($stemName)
+        {
+            
+            $body['WsRestGetGrouperPrivilegesLiteRequest']['stemName'] = $stemName
+        }
+        
+        $body = $body | ConvertTo-Json -Depth 5
+        $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+        return ($response.Content | ConvertFrom-Json).WsGetGrouperPrivilegesLiteResult.privilegeResults
+        if (($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults.count -gt 0)
+        {
+            ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
+        }
+        else {
+            Write-Warning "NO results found"
+        }
+    }
+    End{}
+}
 #endregion
 
 #region Get-GrouperStem
@@ -276,8 +376,8 @@
     }
 #endregion
 
-#region New-GrouperGrouper
-    function New-GrouperGrouper
+#region New-GrouperGroup
+    function New-GrouperGroup
     {
         <#
             .SYNOPSIS
@@ -420,6 +520,114 @@
     }
 #endregion
 
+#region New-GrouperPrivileges
+function New-GrouperPrivileges
+{
+    <#
+        .SYNOPSIS
+            Set Grouper Privileges
+
+        .DESCRIPTION
+            Set Grouper Privileges)
+
+        .PARAMETER uri
+            Full path to Server plus path to API
+            Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+        .PARAMETER header
+            Use New-Header to get this
+
+        .PARAMETER contentType
+            Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+        .PARAMETER stemName
+            stemName
+        
+        .PARAMETER subjectId
+            User to apply Privilege to 
+
+        .PARAMETER actAsSubjectId
+            User security context to use to apply change
+
+        .PARAMETER privilegeName
+            Name of privilege to apply, see Get-GrouperPrivileges for examples
+
+        .NOTES
+            Author: Travis Sobeck
+            LASTEDIT: 7/30/2018
+
+        .EXAMPLE
+    #>
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory)]
+        [string]$uri,
+
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$header,
+
+        [string]$contentType = 'text/x-json;charset=UTF-8',
+
+        [Parameter(Mandatory,ParameterSetName='stem')]
+        [string]$stemName,
+
+        [Parameter(Mandatory,ParameterSetName='group')]
+        [string]$groupName,
+
+        [string]$actAsSubjectId,
+
+        [Parameter(Mandatory)]
+        [string]$subjectId,
+
+        [Parameter(Mandatory)]
+        [string]$privilegeName
+    )
+
+    Begin{}
+    Process
+    {
+        $uri = "$uri/grouperPrivileges"
+        $body = @{
+            WsRestAssignGrouperPrivilegesLiteRequest = @{
+                allowed = 'T'
+                subjectId = $subjectId
+                privilegeName = $privilegeName
+            }
+        }
+        if ($actAsSubjectId)
+        {
+            
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['actAsSubjectId'] = $actAsSubjectId
+        }
+        if ($groupName)
+        {
+            
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['groupName'] = $groupName
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['privilegeType'] = 'access'
+        }
+        if ($stemName)
+        {
+            
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['stemName'] = $stemName
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['privilegeType'] = 'naming'
+        }
+        
+        $body = $body | ConvertTo-Json -Depth 5
+        $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+        return ($response.Content | ConvertFrom-Json).WsGetGrouperPrivilegesLiteResult.privilegeResults
+        if (($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults.count -gt 0)
+        {
+            ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
+        }
+        else {
+            Write-Warning "NO results found"
+        }
+    }
+    End{}
+}
+#endregion
+
 #region New-GrouperStem
     function New-GrouperStem
     {
@@ -489,8 +697,8 @@
     }
 #endregion
 
-#region Remove-GrouperGrouper
-    function Remove-GrouperGrouper
+#region Remove-GrouperGroup
+    function Remove-GrouperGroup
     {
         <#
             .SYNOPSIS
@@ -510,7 +718,7 @@
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
 
             .PARAMETER groupName
-                The groupName, use Get-GrouperGrouper to the get the "name" field
+                The groupName, use Get-GrouperGroup to the get the "name" field
 
             .NOTES
                 Author: Travis Sobeck
@@ -624,11 +832,11 @@
             if ($removeGroups)
             {
                 # Get all the groups
-                $groupNames = (Get-GrouperGrouper -uri $uri -header $header -stemName $stemName).name
+                $groupNames = (Get-GrouperGroup -uri $uri -header $header -stemName $stemName).name
                 # Remove the groups
                 if ($groupNames)
                 {
-                    $null = Remove-GrouperGrouper -uri $uri -header $header -groupName $groupNames
+                    $null = Remove-GrouperGroup -uri $uri -header $header -groupName $groupNames
                     Start-Sleep -Seconds 3
                 }                
             }
