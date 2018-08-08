@@ -46,8 +46,8 @@
     }
 #endregion
 
-#region Get-GrouperGrouper
-    function Get-GrouperGrouper
+#region Get-GrouperGroup
+    function Get-GrouperGroup
     {
         <#
             .SYNOPSIS
@@ -205,7 +205,7 @@ function Get-GrouperPrivileges
             Get Grouper Privileges
 
         .DESCRIPTION
-            Get Grouper Privileges)
+            Get Grouper Privileges
 
         .PARAMETER uri
             Full path to Server plus path to API
@@ -221,7 +221,10 @@ function Get-GrouperPrivileges
             stemName
         
         .PARAMETER subjectId
-            Set this to a username to search as that user if you have access to
+            Filter result for a specific user
+
+        .PARAMETER actAsSubjectId
+            User security context to restrict search to.  ie search as this user
 
         .NOTES
             Author: Travis Sobeck
@@ -541,7 +544,13 @@ function New-GrouperPrivileges
             stemName
         
         .PARAMETER subjectId
-            Set this to a username to search as that user if you have access to
+            User to apply Privilege to 
+
+        .PARAMETER actAsSubjectId
+            User security context to use to apply change
+
+        .PARAMETER privilegeName
+            Name of privilege to apply, see Get-GrouperPrivileges for examples
 
         .NOTES
             Author: Travis Sobeck
@@ -584,7 +593,6 @@ function New-GrouperPrivileges
                 allowed = 'T'
                 subjectId = $subjectId
                 privilegeName = $privilegeName
-                privilegeType = 'access'
             }
         }
         if ($actAsSubjectId)
@@ -596,11 +604,13 @@ function New-GrouperPrivileges
         {
             
             $body['WsRestAssignGrouperPrivilegesLiteRequest']['groupName'] = $groupName
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['privilegeType'] = 'access'
         }
         if ($stemName)
         {
             
             $body['WsRestAssignGrouperPrivilegesLiteRequest']['stemName'] = $stemName
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['privilegeType'] = 'naming'
         }
         
         $body = $body | ConvertTo-Json -Depth 5
@@ -708,7 +718,7 @@ function New-GrouperPrivileges
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
 
             .PARAMETER groupName
-                The groupName, use Get-GrouperGrouper to the get the "name" field
+                The groupName, use Get-GrouperGroup to the get the "name" field
 
             .NOTES
                 Author: Travis Sobeck
