@@ -552,6 +552,9 @@ function New-GrouperPrivileges
         .PARAMETER privilegeName
             Name of privilege to apply, see Get-GrouperPrivileges for examples
 
+        .PARAMETER subjectIdIsAGroup
+            Use this switch (set to true) if the subjectID is actually a GroupName.  The default assumption is that the subjectID is a users ID
+
         .NOTES
             Author: Travis Sobeck
             LASTEDIT: 7/30/2018
@@ -580,6 +583,8 @@ function New-GrouperPrivileges
         [Parameter(Mandatory)]
         [string]$subjectId,
 
+        [switch]$subjectIdIsAGroup = $false,
+
         [Parameter(Mandatory)]
         [string]$privilegeName
     )
@@ -591,10 +596,12 @@ function New-GrouperPrivileges
         $body = @{
             WsRestAssignGrouperPrivilegesLiteRequest = @{
                 allowed = 'T'
-                subjectId = $subjectId
                 privilegeName = $privilegeName
             }
         }
+        if ($subjectIdIsAGroup){$body['WsRestAssignGrouperPrivilegesLiteRequest']['subjectIdentifier'] = $subjectId}
+        else {$body['WsRestAssignGrouperPrivilegesLiteRequest']['subjectId'] = $subjectId}
+
         if ($actAsSubjectId)
         {
             
