@@ -124,6 +124,7 @@
                     $body['WsRestFindGroupsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
                 }
                 $body = $body | ConvertTo-Json -Depth 5
+                Write-Verbose "$uri `n $body"
                 $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
                 return ($response.Content | ConvertFrom-Json).WsFindGroupsResults.groupResults
             }
@@ -189,6 +190,7 @@
                     wsGroupLookups = @(@{groupName = $groupName})
                 }
             } | ConvertTo-Json -Depth 5
+            Write-Verbose "$uri `n $body"
             $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
             return ($response.Content | ConvertFrom-Json).WsGetMembersResults.results.wsSubjects
         }
@@ -362,10 +364,12 @@ function Get-GrouperPrivileges
                 $body['WsRestFindStemsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
             }
             $body = $body | ConvertTo-Json -Depth 5
+            Write-Verbose "$uri `n $body"
             $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
             if (($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults.count -gt 0)
             {
                 ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
+                #Write-Verbose $response
             }
             else {
                 Write-Warning "NO results found"
@@ -512,6 +516,7 @@ function Get-GrouperPrivileges
                         wsGroupLookup = @{groupName = $groupName}
                     }
                 } | ConvertTo-Json -Depth 5
+                Write-Verbose $body
                 $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
                 return @(($response.Content | ConvertFrom-Json).WsAddMemberResults.results.wsSubject,($response.Content | ConvertFrom-Json).WsAddMemberResults.wsGroupAssigned)
         }
