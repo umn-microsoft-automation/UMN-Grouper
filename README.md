@@ -3,6 +3,9 @@ This Powershell module is a collection of function to interact with the Internet
 https://github.com/Internet2/grouper
 https://spaces.internet2.edu/display/Grouper/Grouper+Web+Services
 
+## Update '1.0.5'
+Add Verbose output
+
 ## Update '1.0.4'
 Update function New-GrouperPrivileges to be able to apply a Grouper Group to Privileges
 
