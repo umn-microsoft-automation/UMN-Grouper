@@ -596,10 +596,14 @@ function New-GrouperPrivileges
         $body = @{
             WsRestAssignGrouperPrivilegesLiteRequest = @{
                 allowed = 'T'
-                privilegeName = $privilegeName
+                privilegeName = $privilegeName                
             }
         }
-        if ($subjectIdIsAGroup){$body['WsRestAssignGrouperPrivilegesLiteRequest']['subjectIdentifier'] = $subjectId}
+        if ($subjectIdIsAGroup)
+        {
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['subjectIdentifier'] = $subjectId
+            $body['WsRestAssignGrouperPrivilegesLiteRequest']['subjectSourceId'] = "g:gsa"
+        }
         else {$body['WsRestAssignGrouperPrivilegesLiteRequest']['subjectId'] = $subjectId}
 
         if ($actAsSubjectId)
@@ -621,6 +625,7 @@ function New-GrouperPrivileges
         }
         
         $body = $body | ConvertTo-Json -Depth 5
+        #Write-Debug $body
         $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
         return ($response.Content | ConvertFrom-Json).WsGetGrouperPrivilegesLiteResult.privilegeResults
         if (($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults.count -gt 0)
