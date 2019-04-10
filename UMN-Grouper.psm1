@@ -305,7 +305,7 @@ function Get-GrouperPrivileges
                 Get Grouper Stem(s)
 
             .DESCRIPTION
-                Get Grouper Stem(s)
+                Get all Grouper Stem(s) that match stem pattern
 
             .PARAMETER uri
                 Full path to Server plus path to API
@@ -362,6 +362,95 @@ function Get-GrouperPrivileges
                 $body['WsRestFindStemsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
             }
             $body = $body | ConvertTo-Json -Depth 5
+            $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+            if (($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults.count -gt 0)
+            {
+                ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
+            }
+            else {
+                Write-Warning "NO results found"
+            }
+        }
+
+        End{}
+    }
+#endregion
+
+#region Get-GrouperStemByParent
+    function Get-GrouperStemByParent
+    {
+        <#
+            .SYNOPSIS
+                Get Grouper chled Stem(s) of a parent stem
+
+            .DESCRIPTION
+                Get Grouper chled Stem(s) of a parent stem
+
+            .PARAMETER uri
+                Full path to Server plus path to API
+                Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+            .PARAMETER header
+                Use New-Header to get this
+
+            .PARAMETER contentType
+                Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+            .PARAMETER parentStemName
+                stemName of Parent
+            
+            .PARAMETER recursive
+                recursivly search for all sub-stems
+            
+            .PARAMETER subjectId
+                Set this to a username to search as that user if you have access to
+
+            .NOTES
+                Author: Travis Sobeck
+                LASTEDIT: 7/30/2018
+
+            .EXAMPLE
+        #>
+        [CmdletBinding()]
+        param
+        (
+            [Parameter(Mandatory)]
+            [string]$uri,
+
+            [Parameter(Mandatory)]
+            [System.Collections.Hashtable]$header,
+
+            [string]$contentType = 'text/x-json;charset=UTF-8',
+
+            [Parameter(Mandatory)]
+            [string]$parentStemName,
+
+            [switch]$recursive,
+
+            [string]$subjectId
+        )
+
+        Begin{}
+
+        Process
+        {
+            $uri = "$uri/stems"
+            $body = @{
+                    WsRestFindStemsRequest = @{
+                        wsStemQueryFilter = @{parentStemName = $parentStemName;stemQueryFilterType = 'FIND_BY_PARENT_STEM_NAME'}
+                    }
+            }
+            if($recursive)
+            {
+                $body['WsRestFindStemsRequest']['wsStemQueryFilter']["parentStemNameScope"] = 'ALL_IN_SUBTREE'
+            }
+            if ($subjectId)
+            {
+                
+                $body['WsRestFindStemsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
+            }
+            $body = $body | ConvertTo-Json -Depth 5
+            Write-Verbose -Message $body
             $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
             if (($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults.count -gt 0)
             {
