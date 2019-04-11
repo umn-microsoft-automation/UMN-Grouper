@@ -3,6 +3,10 @@ This Powershell module is a collection of function to interact with the Internet
 https://github.com/Internet2/grouper
 https://spaces.internet2.edu/display/Grouper/Grouper+Web+Services
 
+## Update '1.0.7'
+Add function Get-GrouperStemByParent for improved searches of Stems.  Default with search for stems only one level below parent stem.  Add the -recursive flag to search recursively
+Also add the function Get-GrouperStemByUUID to get stems by their UUID
+
 ## Update '1.0.6'
 Update subjectSourceID to search grouper groups when setting priviledges
 
