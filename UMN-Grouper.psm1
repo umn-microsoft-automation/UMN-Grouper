@@ -305,7 +305,8 @@ function Get-GrouperPrivileges
                 Get Grouper Stem(s)
 
             .DESCRIPTION
-                Get all Grouper Stem(s) that match stem pattern
+                Get a Grouper Stem or use the -search switch to get all Grouper Stem(s) that match stem pattern
+                From API docs -- find by approx name, pass the name in. stem name is required
 
             .PARAMETER uri
                 Full path to Server plus path to API
@@ -320,6 +321,9 @@ function Get-GrouperPrivileges
             .PARAMETER stemName
                 stemName
             
+            .PARAMETER search
+                Switch to do a search.  Use with the caution, results from grouper API are not very reliable
+
             .PARAMETER subjectId
                 Set this to a username to search as that user if you have access to
 
@@ -342,6 +346,8 @@ function Get-GrouperPrivileges
 
             [Parameter(Mandatory)]
             [string]$stemName,
+            
+            [switch]$search,
 
             [string]$subjectId
         )
@@ -353,12 +359,15 @@ function Get-GrouperPrivileges
             $uri = "$uri/stems"
             $body = @{
                     WsRestFindStemsRequest = @{
-                        wsStemQueryFilter = @{stemName = $stemName;stemQueryFilterType = 'FIND_BY_STEM_NAME_APPROXIMATE'}
+                        wsStemQueryFilter = @{stemName = $stemName}
                     }
-            } 
+            }
+
+            if ($search){$body['WsRestFindStemsRequest']['wsStemQueryFilter']['stemQueryFilterType'] = 'FIND_BY_STEM_NAME_APPROXIMATE'}
+            else{$body['WsRestFindStemsRequest']['wsStemQueryFilter']['stemQueryFilterType'] = 'FIND_BY_STEM_NAME'}
+
             if ($subjectId)
-            {
-                
+            {                
                 $body['WsRestFindStemsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
             }
             $body = $body | ConvertTo-Json -Depth 5
@@ -381,7 +390,7 @@ function Get-GrouperPrivileges
     {
         <#
             .SYNOPSIS
-                Get Grouper chled Stem(s) of a parent stem
+                Get Grouper child Stem(s) of a parent stem
 
             .DESCRIPTION
                 Get Grouper child Stem(s) of a parent stem
@@ -399,8 +408,8 @@ function Get-GrouperPrivileges
             .PARAMETER parentStemName
                 stemName of Parent
             
-            .PARAMETER recursive
-                recursivly search for all sub-stems
+            .PARAMETER noRecursion
+                By default the function will recursivly search for all sub-stems, use this switch to only get stems one level below the parent stem
             
             .PARAMETER subjectId
                 Set this to a username to search as that user if you have access to
@@ -425,7 +434,7 @@ function Get-GrouperPrivileges
             [Parameter(Mandatory)]
             [string]$parentStemName,
 
-            [switch]$recursive,
+            [switch]$noRecursion,
 
             [string]$subjectId
         )
@@ -440,10 +449,9 @@ function Get-GrouperPrivileges
                         wsStemQueryFilter = @{parentStemName = $parentStemName;stemQueryFilterType = 'FIND_BY_PARENT_STEM_NAME'}
                     }
             }
-            if($recursive)
-            {
-                $body['WsRestFindStemsRequest']['wsStemQueryFilter']["parentStemNameScope"] = 'ALL_IN_SUBTREE'
-            }
+            if($noRecursion){$body['WsRestFindStemsRequest']['wsStemQueryFilter']["parentStemNameScope"] = 'ONE_LEVEL'}
+            else{$body['WsRestFindStemsRequest']['wsStemQueryFilter']["parentStemNameScope"] = 'ALL_IN_SUBTREE'}
+
             if ($subjectId)
             {
                 
@@ -463,6 +471,86 @@ function Get-GrouperPrivileges
 
         End{}
     }
+#endregion
+
+#region Get-GrouperStemByUUID
+function Get-GrouperStemByUUID
+{
+    <#
+        .SYNOPSIS
+            Get a Grouper Stem by its UUID
+
+        .DESCRIPTION
+            Get a Grouper Stem by its UUID
+
+        .PARAMETER uri
+            Full path to Server plus path to API
+            Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+        .PARAMETER header
+            Use New-Header to get this
+
+        .PARAMETER contentType
+            Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+        .PARAMETER uuid
+            UUID of the stem to retrieve
+
+        .PARAMETER subjectId
+            Set this to a username to search as that user if you have access to
+
+        .NOTES
+            Author: Travis Sobeck
+            LASTEDIT: 7/30/2018
+
+        .EXAMPLE
+    #>
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory)]
+        [string]$uri,
+
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$header,
+
+        [string]$contentType = 'text/x-json;charset=UTF-8',
+
+        [Parameter(Mandatory)]
+        [string]$uuid,
+
+        [string]$subjectId
+    )
+
+    Begin{}
+
+    Process
+    {
+        $uri = "$uri/stems"
+        $body = @{
+                WsRestFindStemsRequest = @{
+                    wsStemQueryFilter = @{stemUuid = $uuid;stemQueryFilterType = 'FIND_BY_STEM_UUID'}
+                }
+        }
+
+        if ($subjectId)
+        {
+            
+            $body['WsRestFindStemsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
+        }
+        $body = $body | ConvertTo-Json -Depth 5
+        $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+        if (($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults.count -gt 0)
+        {
+            ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
+        }
+        else {
+            Write-Warning "NO results found"
+        }
+    }
+
+    End{}
+}
 #endregion
 
 #region New-GrouperGroup
