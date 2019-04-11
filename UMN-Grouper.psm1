@@ -384,7 +384,7 @@ function Get-GrouperPrivileges
                 Get Grouper chled Stem(s) of a parent stem
 
             .DESCRIPTION
-                Get Grouper chled Stem(s) of a parent stem
+                Get Grouper child Stem(s) of a parent stem
 
             .PARAMETER uri
                 Full path to Server plus path to API
