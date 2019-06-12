@@ -290,7 +290,7 @@ function Get-GrouperPrivileges
             ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
         }
         else {
-            Write-Warning "NO results found"
+            Write-Verbose "NO results found"
         }
     }
     End{}
@@ -377,7 +377,7 @@ function Get-GrouperPrivileges
                 ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
             }
             else {
-                Write-Warning "NO results found"
+                Write-Verbose "NO results found"
             }
         }
 
@@ -465,7 +465,7 @@ function Get-GrouperPrivileges
                 ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
             }
             else {
-                Write-Warning "NO results found"
+                Write-Verbose "NO results found"
             }
         }
 
@@ -545,7 +545,7 @@ function Get-GrouperStemByUUID
             ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
         }
         else {
-            Write-Warning "NO results found"
+            Write-Verbose "NO results found"
         }
     }
 
@@ -810,7 +810,7 @@ function New-GrouperPrivileges
             ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
         }
         else {
-            Write-Warning "NO results found"
+            Write-Verbose "NO results found"
         }
     }
     End{}
@@ -991,6 +991,9 @@ function New-GrouperPrivileges
             .PARAMETER removeGroups
                 Grouper will not remove a Stem with other Stems or Groups in it. Set this to remove all the groups first
 
+            .PARAMETER recursive
+                Recursively remove all child stems
+
             .NOTES
                 Author: Travis Sobeck
                 LASTEDIT: 7/30/2018
@@ -1011,23 +1014,35 @@ function New-GrouperPrivileges
             [Parameter(Mandatory)]
             [string]$stemName,
 
-            [switch]$removeGroups
+            [switch]$removeGroups,
+
+            [switch]$recursive
         )
 
         Begin{}
 
         Process
         {
+            if ($recursive)
+            {
+                $stemNames = (Get-GrouperStemByParent -uri $uri -header $header -parentStemName $stemName -noRecursion).Name
+                Write-Verbose "Child Stems: $stemNames"
+                foreach ($stem in $stemNames)
+                {
+                    (Remove-GrouperStem -uri $uri -header $header -stemName $stem -removeGroups:$removeGroups -recursive:$recursive).name
+                }
+            }
             if ($removeGroups)
             {
                 # Get all the groups
                 $groupNames = (Get-GrouperGroup -uri $uri -header $header -stemName $stemName).name
                 # Remove the groups
-                if ($groupNames)
+                Write-Verbose "Child groups: $groupNames"
+                foreach ($groupName in $groupNames)
                 {
-                    $null = Remove-GrouperGroup -uri $uri -header $header -groupName $groupNames
-                    Start-Sleep -Seconds 3
-                }                
+                    $null = Remove-GrouperGroup -uri $uri -header $header -groupName $groupName                    
+                }
+                Start-Sleep -Seconds 1           
             }
             $uri = "$uri/stems"
             $body = @{
