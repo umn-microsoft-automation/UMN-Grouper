@@ -264,7 +264,7 @@ function Get-GrouperPrivileges
         if ($subjectId)
         {
             
-            $body['WsRestGetGrouperPrivilegesLiteRequest']['actAsSubjectId'] = $subjectId
+            $body['WsRestGetGrouperPrivilegesLiteRequest']['subjectId'] = $subjectId
         }
         if ($actAsSubjectId)
         {
