@@ -1026,6 +1026,7 @@ function New-GrouperPrivileges
             if ($recursive)
             {
                 $stemNames = (Get-GrouperStemByParent -uri $uri -header $header -parentStemName $stemName -noRecursion).Name
+                Write-Verbose "Child Stems: $stemNames"
                 foreach ($stem in $stemNames)
                 {
                     (Remove-GrouperStem -uri $uri -header $header -stemName $stem -removeGroups:$removeGroups -recursive:$recursive).name
@@ -1036,11 +1037,12 @@ function New-GrouperPrivileges
                 # Get all the groups
                 $groupNames = (Get-GrouperGroup -uri $uri -header $header -stemName $stemName).name
                 # Remove the groups
-                if ($groupNames)
+                Write-Verbose "Child groups: $groupNames"
+                foreach ($groupName in $groupNames)
                 {
-                    $null = Remove-GrouperGroup -uri $uri -header $header -groupName $groupNames
-                    Start-Sleep -Seconds 3
-                }                
+                    $null = Remove-GrouperGroup -uri $uri -header $header -groupName $groupName                    
+                }
+                Start-Sleep -Seconds 1           
             }
             $uri = "$uri/stems"
             $body = @{
