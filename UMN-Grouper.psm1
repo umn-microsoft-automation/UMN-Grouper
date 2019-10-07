@@ -95,38 +95,42 @@
             [Parameter(Mandatory,ParameterSetName='groupName')]
             [string]$groupName,
 
+            [Parameter(ParameterSetName='groupName')]
+            [switch]$search,
+
             [Parameter(Mandatory,ParameterSetName='stemName')]
             [string]$stemName,
 
             [string]$subjectId
         )
 
-        Begin{}
+        Begin
+        {
+            $uri = "$uri/groups"
+            $body = @{}
+        }
 
         Process
         {
             if ($groupName)
             {
-                Write-Warning "This Option has not been coded yet"
+                if ($search){$body['WsRestFindGroupsRequest'] = @{wsQueryFilter = @{groupName = $groupName;queryFilterType = 'FIND_BY_GROUP_NAME_APPROXIMATE'}}}
+                else{$body['WsRestFindGroupsRequest'] = @{wsQueryFilter = @{groupName = $groupName;queryFilterType = 'FIND_BY_GROUP_NAME_EXACT'}}}
             }
             else
             {
-                $uri = "$uri/groups"
-                $groupName = "$stemName`:"
-                $body = @{
-                        WsRestFindGroupsRequest = @{
-                            wsQueryFilter = @{groupName = $groupName;queryFilterType = 'FIND_BY_GROUP_NAME_APPROXIMATE'}
-                        }
-                } 
-                if ($subjectId)
-                {
-                    
-                    $body['WsRestFindGroupsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
-                }
-                $body = $body | ConvertTo-Json -Depth 5
-                $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
-                return ($response.Content | ConvertFrom-Json).WsFindGroupsResults.groupResults
+                $body['WsRestFindGroupsRequest'] = @{wsQueryFilter = @{stemName = $stemName;queryFilterType = 'FIND_BY_STEM_NAME'}}
             }
+            if ($subjectId)
+            {
+                
+                $body['WsRestFindGroupsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
+            }
+            $body = $body | ConvertTo-Json -Depth 5
+            Write-Verbose -Message $body
+            $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+            return ($response.Content | ConvertFrom-Json).WsFindGroupsResults.groupResults
+            
         }
 
         End{}
@@ -175,7 +179,9 @@
             [string]$contentType = 'text/x-json;charset=UTF-8',
 
             [Parameter(Mandatory)]
-            [string]$groupName
+            [string]$groupName,
+
+            [string]$subjectId
         )
 
         Begin{}
@@ -185,16 +191,124 @@
             $uri = "$uri/groups"
             $body = @{
                 WsRestGetMembersRequest = @{
-                    subjectAttributeNames = @("description","name")
+                    subjectAttributeNames = @("description")
                     wsGroupLookups = @(@{groupName = $groupName})
                 }
-            } | ConvertTo-Json -Depth 5
+            } 
+            if ($subjectId)
+            {
+                
+                #$body['WsRestGetMembersRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
+                $body['WsRestGetMembersRequest']['actAsSubjectLookup'] = @{subjectIdentifier = $subjectId};
+            }
+            $body = $body | ConvertTo-Json -Depth 5
+            Write-Verbose -Message $body
             $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
             return ($response.Content | ConvertFrom-Json).WsGetMembersResults.results.wsSubjects
         }
 
         End{}
     }
+#endregion
+
+#region Get-GrouperGroupsForMember
+function Get-GrouperGroupsForMember
+{
+    <#
+        .SYNOPSIS
+            Get List of Members in a Group
+
+        .DESCRIPTION
+            Get List of Members in a Group
+
+        .PARAMETER uri
+            Full path to Server plus path to API
+            Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
+
+        .PARAMETER header
+            Use New-Header to get this
+
+        .PARAMETER contentType
+            Set Content Type, currently 'text/x-json;charset=UTF-8'
+
+        .PARAMETER memberName
+            This represents the member for which you want to retrieve the list of groups by
+
+        .PARAMETER subjectSourceId
+            Source location of subjectId, ie ldap
+        
+        .PARAMETER memberFilter
+            Can base membership list based on memberfilter (e.g. All, Immediate, Effective)
+            Immediate = Direct membership, Effective = Inherited
+
+        .PARAMETER stemName
+            Limit search to stem
+
+        .NOTES
+            Author: Travis Sobeck
+            LASTEDIT: 6/30/2019
+
+        .EXAMPLE
+            Get-GrouperGroupsForMember -uri $uri -header $header -memberName 'ldap_Identifier' -subjectSourceId 'umnldap' -stemName 'umn:itac'
+    #>
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory)]
+        [string]$uri,
+
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$header,
+
+        [string]$contentType = 'text/x-json;charset=UTF-8',
+
+        [Parameter(Mandatory)]
+        [string]$memberName,
+
+        [string]$subjectId,
+
+        [Parameter(Mandatory)]
+        [string]$subjectSourceId,
+
+        [string]$stemName,
+
+        [ValidateSet("All", "Immediate", "Effective")]
+        [string]$memberFilter
+    )
+
+    Begin{}
+
+    Process
+    {
+        $uri = "$uri/memberships"
+        $body = @{
+            WsRestGetMembershipsRequest = @{
+                fieldName = 'members'
+                wsSubjectLookups = @(@{subjectId = $memberName;subjectSourceId = $subjectSourceId})
+            }
+        } 
+        if ($subjectId)
+        {
+            
+            $body['WsRestGetMembershipsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
+        }
+        if($memberFilter)
+        {
+            $body['WsRestGetMembershipsRequest']['memberFilter'] = $memberFilter;
+        }
+        if($stemName)
+        {
+            $body['WsRestGetMembershipsRequest']['wsStemLookup'] = @{stemName = $stemName}
+            $body['WsRestGetMembershipsRequest']['stemScope'] = 'ALL_IN_SUBTREE'
+        }
+        $body = $body | ConvertTo-Json -Depth 5
+        Write-Verbose -Message $body
+        $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+        return ($response.Content | ConvertFrom-Json).WsGetMembershipsResults.wsGroups
+    }
+
+    End{}
+}
 #endregion
 
 #region Get-GrouperPrivileges
@@ -647,9 +761,14 @@ function Get-GrouperStemByUUID
                 Example: stem1:substem:supergroup
 
             .PARAMETER subjectId
+                Each implemetation of Grouper will determine what this value represents
+
+            .PARAMETER subjectIdentifier
+                Alternative way to identify user to be added
 
             .PARAMETER subjectSourceId
                 Source location of subjectId, ie ldap
+            
             .NOTES
                 Author: Travis Sobeck
                 LASTEDIT: 7/30/2018
@@ -670,8 +789,11 @@ function Get-GrouperStemByUUID
             [Parameter(Mandatory)]
             [string]$groupName,
 
-            [Parameter(Mandatory)]
+            [Parameter(Mandatory,ParameterSetName='subjectId')]
             [string]$subjectId,
+
+            [Parameter(Mandatory,ParameterSetName='subjectIdentifier')]
+            [string]$subjectIdentifier,
 
             [string]$subjectSourceId
         )
@@ -681,16 +803,18 @@ function Get-GrouperStemByUUID
         Process
         {
             $uri = "$uri/groups"
-            $subjectLookups = @(@{subjectId = $subjectId})
+            if ($subjectIdentifier){$subjectLookups = @(@{subjectIdentifier = $subjectIdentifier})}
+            else{$subjectLookups = @(@{subjectId = $subjectId})}
             if ($subjectSourceId){$subjectLookups[0]['subjectSourceId'] = $subjectSourceId}
-                $body = @{
-                    WsRestAddMemberRequest = @{
-                        subjectLookups = $subjectLookups
-                        wsGroupLookup = @{groupName = $groupName}
-                    }
-                } | ConvertTo-Json -Depth 5
-                $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
-                return @(($response.Content | ConvertFrom-Json).WsAddMemberResults.results.wsSubject,($response.Content | ConvertFrom-Json).WsAddMemberResults.wsGroupAssigned)
+            $body = @{
+                WsRestAddMemberRequest = @{
+                    subjectLookups = $subjectLookups
+                    wsGroupLookup = @{groupName = $groupName}
+                }
+            } | ConvertTo-Json -Depth 5
+            Write-Verbose $body
+            $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+            return @(($response.Content | ConvertFrom-Json).WsAddMemberResults.results.wsSubject,($response.Content | ConvertFrom-Json).WsAddMemberResults.wsGroupAssigned)
         }
 
         End{}
