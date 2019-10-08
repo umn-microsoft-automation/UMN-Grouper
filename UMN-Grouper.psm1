@@ -262,10 +262,13 @@ function Get-GrouperGroupsForMember
 
         [string]$contentType = 'text/x-json;charset=UTF-8',
 
-        [Parameter(Mandatory)]
-        [string]$memberName,
-
+        [Parameter(Mandatory,ParameterSetName='subjectId')]
         [string]$subjectId,
+
+        [Parameter(Mandatory,ParameterSetName='subjectIdentifier')]
+        [string]$subjectIdentifier,
+
+        [string]$actAsSubjectId,
 
         [Parameter(Mandatory)]
         [string]$subjectSourceId,
@@ -286,11 +289,13 @@ function Get-GrouperGroupsForMember
                 fieldName = 'members'
                 wsSubjectLookups = @(@{subjectId = $memberName;subjectSourceId = $subjectSourceId})
             }
-        } 
-        if ($subjectId)
+        }
+        if ($subjectIdentifier){$body['WsRestGetMembershipsRequest']['wsSubjectLookups'] = @(@{subjectIdentifier = $subjectIdentifier;subjectSourceId = $subjectSourceId})}
+        else{$body['WsRestGetMembershipsRequest']['wsSubjectLookups'] = @(@{subjectId = $subjectId;subjectSourceId = $subjectSourceId})}
+        if ($actAsSubjectId)
         {
             
-            $body['WsRestGetMembershipsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
+            $body['WsRestGetMembershipsRequest']['actAsSubjectLookup'] = @{subjectId = $actAsSubjectId};
         }
         if($memberFilter)
         {
