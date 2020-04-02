@@ -3,6 +3,10 @@ This Powershell module is a collection of function to interact with the Internet
 https://github.com/Internet2/grouper
 https://spaces.internet2.edu/display/Grouper/Grouper+Web+Services
 
+## Update '1.0.11'
+The process to add a privilege is the same as removing one by simply setting 'Allowed' to 'T' (true) will ADD the priviledge, while setting it to 'F' (false) will remove the Privilege
+Updated function New-GrouperPrivileges to Set-GrouperPrivileges, added Alias New-GrouperPrivileges and set default value of Allowed to 'T' to make the function backwards compatible.
+ 
 ## Update '1.0.10'
 Refactor Get-GrouperGroupsForMember to use subjectIdentifier as 'user'
 
