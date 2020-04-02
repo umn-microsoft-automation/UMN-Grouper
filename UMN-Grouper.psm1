@@ -402,15 +402,10 @@ function Get-GrouperPrivileges
         }
         
         $body = $body | ConvertTo-Json -Depth 5
+        Write-Verbose $body
         $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
+        Write-Verbose ($response.Content | ConvertFrom-Json).WsGetGrouperPrivilegesLiteResult
         return ($response.Content | ConvertFrom-Json).WsGetGrouperPrivilegesLiteResult.privilegeResults
-        if (($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults.count -gt 0)
-        {
-            ($response.Content | ConvertFrom-Json).WsFindStemsResults.stemResults
-        }
-        else {
-            Write-Verbose "NO results found"
-        }
     }
     End{}
 }
@@ -826,15 +821,15 @@ function Get-GrouperStemByUUID
     }
 #endregion
 
-#region New-GrouperPrivileges
-function New-GrouperPrivileges
+#region Set-GrouperPrivileges/New-GrouperPrivileges
+function Set-GrouperPrivileges
 {
     <#
         .SYNOPSIS
-            Set Grouper Privileges
+            Set Grouper Privileges, either Add or Remove based on 'allowed' paramter
 
         .DESCRIPTION
-            Set Grouper Privileges)
+            Set Grouper Privileges, either Add or Remove based on 'allowed' paramter
 
         .PARAMETER uri
             Full path to Server plus path to API
@@ -858,6 +853,9 @@ function New-GrouperPrivileges
         .PARAMETER privilegeName
             Name of privilege to apply, see Get-GrouperPrivileges for examples
 
+        .PARAMETER allowed
+            Setting this to 'T' (true) will ADD the priviledge, while setting it to 'F' (false) will remove the Privilege
+
         .PARAMETER subjectIdIsAGroup
             Use this switch (set to true) if the subjectID is actually a GroupName.  The default assumption is that the subjectID is a users ID
 
@@ -868,6 +866,7 @@ function New-GrouperPrivileges
         .EXAMPLE
     #>
     [CmdletBinding()]
+    [Alias('New-GrouperPrivileges')]
     param
     (
         [Parameter(Mandatory)]
@@ -892,7 +891,10 @@ function New-GrouperPrivileges
         [switch]$subjectIdIsAGroup = $false,
 
         [Parameter(Mandatory)]
-        [string]$privilegeName
+        [string]$privilegeName,
+
+        [ValidateSet("T","F")]
+        [string]$allowed = 'T'
     )
 
     Begin{}
@@ -901,7 +903,7 @@ function New-GrouperPrivileges
         $uri = "$uri/grouperPrivileges"
         $body = @{
             WsRestAssignGrouperPrivilegesLiteRequest = @{
-                allowed = 'T'
+                allowed = $allowed
                 privilegeName = $privilegeName                
             }
         }
@@ -1182,7 +1184,6 @@ function New-GrouperPrivileges
             $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
             $removedStems = ($response.Content | ConvertFrom-Json).WsStemDeleteResults.results.wsStem
             return $removedStems
-            #($response.Content | ConvertFrom-Json).WsStemDeleteResults.results.resultMetadata.resultCode
         }
 
         End{}
