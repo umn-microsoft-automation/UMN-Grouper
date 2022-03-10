@@ -1,12 +1,15 @@
 # UMN-Grouper
-This Powershell module is a collection of function to interact with the Internet2 grouper rest API 
+This Powershell module is a collection of function to interact with the Internet2 grouper rest API
 https://github.com/Internet2/grouper
 https://spaces.internet2.edu/display/Grouper/Grouper+Web+Services
+
+## Update '1.0.12'
+Minor text change for New-Header to New-GrouperHeader as reference variable.
 
 ## Update '1.0.11'
 The process to add a privilege is the same as removing one by simply setting 'Allowed' to 'T' (true) will ADD the priviledge, while setting it to 'F' (false) will remove the Privilege
 Updated function New-GrouperPrivileges to Set-GrouperPrivileges, added Alias New-GrouperPrivileges and set default value of Allowed to 'T' to make the function backwards compatible.
- 
+
 ## Update '1.0.10'
 Refactor Get-GrouperGroupsForMember to use subjectIdentifier as 'user'
 
@@ -31,7 +34,7 @@ Update function New-GrouperPrivileges to be able to apply a Grouper Group to Pri
 Add functions New-GrouperPrivileges and Get-GrouperPrivileges
 
 ## Update '1.0.2'
-Add functions New-GrouperGroupMember and Get-GrouperGrouperMembers 
+Add functions New-GrouperGroupMember and Get-GrouperGrouperMembers
 
 ## Update '1.0.1'
 Fix bugs

@@ -61,7 +61,7 @@
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -71,7 +71,7 @@
 
             .PARAMETER stemName
                 Use this to get a list of groups in a specific stem.  Use Get-GrouperStem to find stem
-            
+
             .PARAMETER subjectId
                 Set this to a username to search as that user if you have access to
 
@@ -123,14 +123,14 @@
             }
             if ($subjectId)
             {
-                
+
                 $body['WsRestFindGroupsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
             }
             $body = $body | ConvertTo-Json -Depth 5
             Write-Verbose -Message $body
             $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
             return ($response.Content | ConvertFrom-Json).WsFindGroupsResults.groupResults
-            
+
         }
 
         End{}
@@ -152,7 +152,7 @@
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -194,10 +194,10 @@
                     subjectAttributeNames = @("description")
                     wsGroupLookups = @(@{groupName = $groupName})
                 }
-            } 
+            }
             if ($subjectId)
             {
-                
+
                 #$body['WsRestGetMembersRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
                 $body['WsRestGetMembersRequest']['actAsSubjectLookup'] = @{subjectIdentifier = $subjectId};
             }
@@ -226,7 +226,7 @@ function Get-GrouperGroupsForMember
             Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
         .PARAMETER header
-            Use New-Header to get this
+            Use New-GrouperHeader to get this
 
         .PARAMETER contentType
             Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -236,7 +236,7 @@ function Get-GrouperGroupsForMember
 
         .PARAMETER subjectSourceId
             Source location of subjectId, ie ldap
-        
+
         .PARAMETER memberFilter
             Can base membership list based on memberfilter (e.g. All, Immediate, Effective)
             Immediate = Direct membership, Effective = Inherited
@@ -294,7 +294,7 @@ function Get-GrouperGroupsForMember
         else{$body['WsRestGetMembershipsRequest']['wsSubjectLookups'] = @(@{subjectId = $subjectId;subjectSourceId = $subjectSourceId})}
         if ($actAsSubjectId)
         {
-            
+
             $body['WsRestGetMembershipsRequest']['actAsSubjectLookup'] = @{subjectId = $actAsSubjectId};
         }
         if($memberFilter)
@@ -331,14 +331,14 @@ function Get-GrouperPrivileges
             Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
         .PARAMETER header
-            Use New-Header to get this
+            Use New-GrouperHeader to get this
 
         .PARAMETER contentType
             Set Content Type, currently 'text/x-json;charset=UTF-8'
 
         .PARAMETER stemName
             stemName
-        
+
         .PARAMETER subjectId
             Filter result for a specific user
 
@@ -379,28 +379,28 @@ function Get-GrouperPrivileges
         $uri = "$uri/grouperPrivileges"
         $body = @{
             WsRestGetGrouperPrivilegesLiteRequest = @{}
-        } 
+        }
         if ($subjectId)
         {
-            
+
             $body['WsRestGetGrouperPrivilegesLiteRequest']['subjectId'] = $subjectId
         }
         if ($actAsSubjectId)
         {
-            
+
             $body['WsRestGetGrouperPrivilegesLiteRequest']['actAsSubjectId'] = $actAsSubjectId
         }
         if ($groupName)
         {
-            
+
             $body['WsRestGetGrouperPrivilegesLiteRequest']['groupName'] = $groupName
         }
         if ($stemName)
         {
-            
+
             $body['WsRestGetGrouperPrivilegesLiteRequest']['stemName'] = $stemName
         }
-        
+
         $body = $body | ConvertTo-Json -Depth 5
         Write-Verbose $body
         $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
@@ -427,14 +427,14 @@ function Get-GrouperPrivileges
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
 
             .PARAMETER stemName
                 stemName
-            
+
             .PARAMETER search
                 Switch to do a search.  Use with the caution, results from grouper API are not very reliable
 
@@ -460,7 +460,7 @@ function Get-GrouperPrivileges
 
             [Parameter(Mandatory)]
             [string]$stemName,
-            
+
             [switch]$search,
 
             [string]$subjectId
@@ -481,7 +481,7 @@ function Get-GrouperPrivileges
             else{$body['WsRestFindStemsRequest']['wsStemQueryFilter']['stemQueryFilterType'] = 'FIND_BY_STEM_NAME'}
 
             if ($subjectId)
-            {                
+            {
                 $body['WsRestFindStemsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
             }
             $body = $body | ConvertTo-Json -Depth 5
@@ -514,17 +514,17 @@ function Get-GrouperPrivileges
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
 
             .PARAMETER parentStemName
                 stemName of Parent
-            
+
             .PARAMETER noRecursion
                 By default the function will recursivly search for all sub-stems, use this switch to only get stems one level below the parent stem
-            
+
             .PARAMETER subjectId
                 Set this to a username to search as that user if you have access to
 
@@ -568,7 +568,7 @@ function Get-GrouperPrivileges
 
             if ($subjectId)
             {
-                
+
                 $body['WsRestFindStemsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
             }
             $body = $body | ConvertTo-Json -Depth 5
@@ -602,7 +602,7 @@ function Get-GrouperStemByUUID
             Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
         .PARAMETER header
-            Use New-Header to get this
+            Use New-GrouperHeader to get this
 
         .PARAMETER contentType
             Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -649,7 +649,7 @@ function Get-GrouperStemByUUID
 
         if ($subjectId)
         {
-            
+
             $body['WsRestFindStemsRequest']['actAsSubjectLookup'] = @{subjectId = $subjectId};
         }
         $body = $body | ConvertTo-Json -Depth 5
@@ -682,7 +682,7 @@ function Get-GrouperStemByUUID
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -751,7 +751,7 @@ function Get-GrouperStemByUUID
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -768,7 +768,7 @@ function Get-GrouperStemByUUID
 
             .PARAMETER subjectSourceId
                 Source location of subjectId, ie ldap
-            
+
             .NOTES
                 Author: Travis Sobeck
                 LASTEDIT: 7/30/2018
@@ -836,16 +836,16 @@ function Set-GrouperPrivileges
             Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
         .PARAMETER header
-            Use New-Header to get this
+            Use New-GrouperHeader to get this
 
         .PARAMETER contentType
             Set Content Type, currently 'text/x-json;charset=UTF-8'
 
         .PARAMETER stemName
             stemName
-        
+
         .PARAMETER subjectId
-            User to apply Privilege to 
+            User to apply Privilege to
 
         .PARAMETER actAsSubjectId
             User security context to use to apply change
@@ -904,7 +904,7 @@ function Set-GrouperPrivileges
         $body = @{
             WsRestAssignGrouperPrivilegesLiteRequest = @{
                 allowed = $allowed
-                privilegeName = $privilegeName                
+                privilegeName = $privilegeName
             }
         }
         if ($subjectIdIsAGroup)
@@ -916,22 +916,22 @@ function Set-GrouperPrivileges
 
         if ($actAsSubjectId)
         {
-            
+
             $body['WsRestAssignGrouperPrivilegesLiteRequest']['actAsSubjectId'] = $actAsSubjectId
         }
         if ($groupName)
         {
-            
+
             $body['WsRestAssignGrouperPrivilegesLiteRequest']['groupName'] = $groupName
             $body['WsRestAssignGrouperPrivilegesLiteRequest']['privilegeType'] = 'access'
         }
         if ($stemName)
         {
-            
+
             $body['WsRestAssignGrouperPrivilegesLiteRequest']['stemName'] = $stemName
             $body['WsRestAssignGrouperPrivilegesLiteRequest']['privilegeType'] = 'naming'
         }
-        
+
         $body = $body | ConvertTo-Json -Depth 5
         #Write-Debug $body
         $response = Invoke-WebRequest -Uri $uri -Headers $header -Method Post -Body $body -UseBasicParsing -ContentType $contentType
@@ -963,7 +963,7 @@ function Set-GrouperPrivileges
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -973,7 +973,7 @@ function Set-GrouperPrivileges
                 Example: stem1:substem:newstem
 
             .PARAMETER description
-                The description represents the the Name in the form users in the UI will see the group 
+                The description represents the the Name in the form users in the UI will see the group
 
             .NOTES
                 Author: Travis Sobeck
@@ -1032,7 +1032,7 @@ function Set-GrouperPrivileges
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -1088,7 +1088,7 @@ function Set-GrouperPrivileges
                 $deletedGroups = ($response.Content | ConvertFrom-Json).WsGroupDeleteResults.results.wsGroup
                 $deletedGroups
             }
-            
+
             #return ($response.Content | ConvertFrom-Json).WsGroupDeleteResults.results.resultMetadata.resultCode
         }
 
@@ -1111,7 +1111,7 @@ function Set-GrouperPrivileges
                 Example "https://<FQDN>/grouper-ws/servicesRest/json/v2_2_100"
 
             .PARAMETER header
-                Use New-Header to get this
+                Use New-GrouperHeader to get this
 
             .PARAMETER contentType
                 Set Content Type, currently 'text/x-json;charset=UTF-8'
@@ -1171,9 +1171,9 @@ function Set-GrouperPrivileges
                 Write-Verbose "Child groups: $groupNames"
                 foreach ($groupName in $groupNames)
                 {
-                    $null = Remove-GrouperGroup -uri $uri -header $header -groupName $groupName                    
+                    $null = Remove-GrouperGroup -uri $uri -header $header -groupName $groupName
                 }
-                Start-Sleep -Seconds 1           
+                Start-Sleep -Seconds 1
             }
             $uri = "$uri/stems"
             $body = @{
